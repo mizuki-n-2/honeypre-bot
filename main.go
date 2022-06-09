@@ -50,7 +50,12 @@ func main() {
 			continue
 		}
 		datetimeStr := t.Text[dateIndex+len(dateKeyword):dateIndex+len(dateKeyword)+11]
-		datetime, _ := time.ParseInLocation(datetimeFormat, fmt.Sprintf("%d/%s", now.Year(), datetimeStr), jst)
+		currentYear := now.Year()
+		if t.CreatedAt != "" {
+			createdAt, _ := time.ParseInLocation(datetimeFormat, t.CreatedAt, jst)
+			currentYear = createdAt.Year()
+		}
+		datetime, _ := time.ParseInLocation(datetimeFormat, fmt.Sprintf("%d/%s", currentYear, datetimeStr), jst)
 
 		fmt.Println(now)
 		fmt.Println(datetime)
