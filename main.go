@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/line/line-bot-sdk-go/v7/linebot"
 	"github.com/sivchari/gotwtr"
 )
 
@@ -22,12 +23,19 @@ func main() {
 	client := gotwtr.New(token)
 	tsr, err := client.SearchRecentTweets(context.Background(), "ハニプレ ゲリラライブ Lv3", &gotwtr.SearchTweetsOption{
 		MediaFields: []gotwtr.MediaField{gotwtr.MediaFieldURL},
-		MaxResults: 10,
+		MaxResults:  10,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
+	channelSecret := os.Getenv("CHANNEL_SECRET")
+	channelToken := os.Getenv("CHANNEL_TOKEN")
+	bot, err := linebot.New(channelSecret, channelToken)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	idKeyword := "ゲリラ招待ID:"
 	dateKeyword := "期限:"
 	now := time.Now()
@@ -40,16 +48,16 @@ func main() {
 			fmt.Println("フォーマットが違う(ゲリラ招待ID)")
 			continue
 		}
-		id := t.Text[idIndex+len(idKeyword):idIndex+len(idKeyword)+8]
+		id := t.Text[idIndex+len(idKeyword) : idIndex+len(idKeyword)+8]
 		// TODO: IDで既に送信済みか判定する
 		fmt.Println(id)
-		
+
 		dateIndex := strings.Index(t.Text, dateKeyword)
 		if dateIndex == -1 {
 			fmt.Println("フォーマットが違う(期限)")
 			continue
 		}
-		datetimeStr := t.Text[dateIndex+len(dateKeyword):dateIndex+len(dateKeyword)+11]
+		datetimeStr := t.Text[dateIndex+len(dateKeyword) : dateIndex+len(dateKeyword)+11]
 		currentYear := now.Year()
 		if t.CreatedAt != "" {
 			createdAt, _ := time.ParseInLocation(datetimeFormat, t.CreatedAt, jst)
@@ -57,12 +65,11 @@ func main() {
 		}
 		datetime, _ := time.ParseInLocation(datetimeFormat, fmt.Sprintf("%d/%s", currentYear, datetimeStr), jst)
 
-		fmt.Println(now)
-		fmt.Println(datetime)
-		fmt.Println("---")
 		if now.Before(datetime) {
-			// TODO: メッセージを送信
 			fmt.Println(t.Text)
+			if _, err := bot.PushMessage(os.Getenv("MY_USER_ID"), linebot.NewTextMessage(t.Text)).Do(); err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 }
