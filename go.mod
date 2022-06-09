@@ -7,4 +7,4 @@ require (
 	github.com/sivchari/gotwtr v1.0.1
 )
 
-require github.com/line/line-bot-sdk-go/v7 v7.16.0 // indirect
+require github.com/line/line-bot-sdk-go/v7 v7.16.0
