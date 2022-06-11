@@ -8,3 +8,5 @@ require (
 )
 
 require github.com/line/line-bot-sdk-go/v7 v7.16.0
+
+require github.com/gomodule/redigo v1.8.8 // indirect

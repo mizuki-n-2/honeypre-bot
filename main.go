@@ -8,10 +8,29 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gomodule/redigo/redis"
 	"github.com/joho/godotenv"
 	"github.com/line/line-bot-sdk-go/v7/linebot"
 	"github.com/sivchari/gotwtr"
 )
+
+func Connection() redis.Conn {
+	c, err := redis.Dial("tcp", "127.0.0.1:6379")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return c
+}
+
+func Exists(id string, c redis.Conn) (bool, error) {
+	exists, err := redis.Bool(c.Do("EXISTS", id))
+	return exists, err
+}
+
+func Set(key string, value string, c redis.Conn) error {
+	_, err := c.Do("SET", key, value)
+	return err
+}
 
 func main() {
 	err := godotenv.Load(".env")
@@ -34,6 +53,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	c := Connection()
+	defer c.Close()
+
 	idKeyword := "ゲリラ招待ID:"
 	dateKeyword := "期限:"
 	now := time.Now()
@@ -41,15 +63,7 @@ func main() {
 	jst, _ := time.LoadLocation("Asia/Tokyo")
 
 	for _, t := range tsr.Tweets {
-		idIndex := strings.Index(t.Text, idKeyword)
-		if idIndex == -1 {
-			fmt.Println("フォーマットが違う(ゲリラ招待ID)")
-			continue
-		}
-		id := t.Text[idIndex+len(idKeyword) : idIndex+len(idKeyword)+8]
-		// TODO: IDで既に送信済みか判定する
-		fmt.Println(id)
-
+		// Textから日時を抽出してフォーマット
 		dateIndex := strings.Index(t.Text, dateKeyword)
 		if dateIndex == -1 {
 			fmt.Println("フォーマットが違う(期限)")
@@ -64,8 +78,33 @@ func main() {
 		datetime, _ := time.ParseInLocation(datetimeFormat, fmt.Sprintf("%d/%s", currentYear, datetimeStr), jst)
 
 		if now.Before(datetime) {
-			fmt.Println(t.Text)
+			// TextからIDを抽出
+			idIndex := strings.Index(t.Text, idKeyword)
+			if idIndex == -1 {
+				fmt.Println("フォーマットが違う(ゲリラ招待ID)")
+				continue
+			}
+			id := t.Text[idIndex+len(idKeyword) : idIndex+len(idKeyword)+8]
+
+			// IDで既に送信済みか判定する
+			isExists, err := Exists(id, c)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if isExists {
+				fmt.Println("既に送信済み")
+				continue
+			}
+
+			fmt.Println(t.Text) // ログ用
+
+			// メッセージを送信する
 			if _, err := bot.PushMessage(os.Getenv("MY_USER_ID"), linebot.NewTextMessage(t.Text)).Do(); err != nil {
+				log.Fatal(err)
+			}
+
+			// IDをRedisに保存する
+			if err := Set(id, "", c); err != nil {
 				log.Fatal(err)
 			}
 		}
