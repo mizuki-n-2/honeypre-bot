@@ -15,7 +15,7 @@ import (
 )
 
 func Connection() redis.Conn {
-	c, err := redis.Dial("tcp", "127.0.0.1:6379")
+	c, err := redis.Dial("tcp", os.Getenv("REDIS_ADDRESS"))
 	if err != nil {
 		log.Fatal(err)
 	}
