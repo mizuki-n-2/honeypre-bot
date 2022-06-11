@@ -29,9 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	channelSecret := os.Getenv("CHANNEL_SECRET")
-	channelToken := os.Getenv("CHANNEL_TOKEN")
-	bot, err := linebot.New(channelSecret, channelToken)
+	bot, err := linebot.New(os.Getenv("CHANNEL_SECRET"), os.Getenv("CHANNEL_TOKEN"))
 	if err != nil {
 		log.Fatal(err)
 	}
