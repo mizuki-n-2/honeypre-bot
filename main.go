@@ -28,8 +28,16 @@ func Exists(id string, c redis.Conn) (bool, error) {
 }
 
 func Set(key string, value string, c redis.Conn) error {
-	_, err := c.Do("SET", key, value)
-	return err
+	if _, err := c.Do("SET", key, value); err != nil {
+		return err
+	}
+
+	// 有効期限は1時間
+	if _, err := c.Do("EXPIRE", key, 60*60); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func main() {
