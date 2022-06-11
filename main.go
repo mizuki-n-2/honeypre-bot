@@ -48,7 +48,7 @@ func main() {
 
 	token := os.Getenv("BEARER_TOKEN")
 	client := gotwtr.New(token)
-	tsr, err := client.SearchRecentTweets(context.Background(), "ハニプレ ゲリラライブ Lv3", &gotwtr.SearchTweetsOption{
+	tsr, err := client.SearchRecentTweets(context.Background(), "ハニプレ ゲリラライブ Lv2", &gotwtr.SearchTweetsOption{
 		MediaFields: []gotwtr.MediaField{gotwtr.MediaFieldURL},
 		MaxResults:  10,
 	})
