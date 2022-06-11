@@ -15,7 +15,7 @@ import (
 )
 
 func Connection() redis.Conn {
-	c, err := redis.Dial("tcp", os.Getenv("REDIS_ADDRESS"))
+	c, err := redis.DialURL(os.Getenv("REDIS_URL"), redis.DialTLSSkipVerify(true))
 	if err != nil {
 		log.Fatal(err)
 	}
