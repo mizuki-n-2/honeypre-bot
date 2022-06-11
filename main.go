@@ -107,7 +107,7 @@ func main() {
 			fmt.Println(t.Text) // ログ用
 
 			// メッセージを送信する
-			if _, err := bot.PushMessage(os.Getenv("MY_USER_ID"), linebot.NewTextMessage(t.Text)).Do(); err != nil {
+			if _, err := bot.PushMessage(os.Getenv("GROUP_ID"), linebot.NewTextMessage(t.Text)).Do(); err != nil {
 				log.Fatal("linebot message error:", err)
 			}
 
