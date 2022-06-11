@@ -66,9 +66,13 @@ func main() {
 
 	idKeyword := "ゲリラ招待ID:"
 	dateKeyword := "期限:"
-	now := time.Now()
+
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	now := time.Now().In(jst)
 	datetimeFormat := "2006/01/02 15:04"
-	jst, _ := time.LoadLocation("Asia/Tokyo")
 
 	for _, t := range tsr.Tweets {
 		// Textから日時を抽出してフォーマット
@@ -78,12 +82,8 @@ func main() {
 			continue
 		}
 		datetimeStr := t.Text[dateIndex+len(dateKeyword) : dateIndex+len(dateKeyword)+11]
-		currentYear := now.Year()
-		if t.CreatedAt != "" {
-			createdAt, _ := time.ParseInLocation(datetimeFormat, t.CreatedAt, jst)
-			currentYear = createdAt.Year()
-		}
-		datetime, _ := time.ParseInLocation(datetimeFormat, fmt.Sprintf("%d/%s", currentYear, datetimeStr), jst)
+		// yearは取得できないので、実行時と同じ年を設定
+		datetime, _ := time.ParseInLocation(datetimeFormat, fmt.Sprintf("%d/%s", now.Year(), datetimeStr), jst)
 
 		if now.Before(datetime) {
 			// TextからIDを抽出
