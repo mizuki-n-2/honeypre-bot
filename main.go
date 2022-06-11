@@ -43,7 +43,7 @@ func Set(key string, value string, c redis.Conn) error {
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		fmt.Printf("読み込み出来ませんでした: %v", err)
+		fmt.Printf("読み込み出来ませんでした: %v\n", err)
 	}
 
 	token := os.Getenv("BEARER_TOKEN")
