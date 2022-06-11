@@ -17,7 +17,7 @@ import (
 func Connection() redis.Conn {
 	c, err := redis.DialURL(os.Getenv("REDIS_URL"), redis.DialTLSSkipVerify(true))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("redis error:", err)
 	}
 	return c
 }
@@ -53,12 +53,12 @@ func main() {
 		MaxResults:  10,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("tweet client error:", err)
 	}
 
 	bot, err := linebot.New(os.Getenv("CHANNEL_SECRET"), os.Getenv("CHANNEL_TOKEN"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("linebot.New error:", err)
 	}
 
 	c := Connection()
@@ -69,7 +69,7 @@ func main() {
 
 	jst, err := time.LoadLocation("Asia/Tokyo")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("time.LoadLocation error:", err)
 	}
 	now := time.Now().In(jst)
 	datetimeFormat := "2006/01/02 15:04"
@@ -108,12 +108,12 @@ func main() {
 
 			// メッセージを送信する
 			if _, err := bot.PushMessage(os.Getenv("MY_USER_ID"), linebot.NewTextMessage(t.Text)).Do(); err != nil {
-				log.Fatal(err)
+				log.Fatal("linebot message error:", err)
 			}
 
 			// IDをRedisに保存する
 			if err := Set(id, "", c); err != nil {
-				log.Fatal(err)
+				log.Fatal("redis set error:", err)
 			}
 		}
 	}
