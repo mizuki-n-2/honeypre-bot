@@ -75,6 +75,8 @@ func main() {
 	datetimeFormat := "2006/01/02 15:04"
 
 	for _, t := range tsr.Tweets {
+		fmt.Println(t) // ログ用
+
 		// Textから日時を抽出してフォーマット
 		dateIndex := strings.Index(t.Text, dateKeyword)
 		if dateIndex == -1 {
