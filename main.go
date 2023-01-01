@@ -40,17 +40,27 @@ func Set(key string, value string, c redis.Conn) error {
 	return nil
 }
 
+var DATETIME_FORMAT = "2006/01/02 15:04"
+
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
 		fmt.Printf("読み込み出来ませんでした: %v\n", err)
 	}
 
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		log.Fatal("time.LoadLocation error:", err)
+	}
+	now := time.Now().In(jst)
+
 	token := os.Getenv("BEARER_TOKEN")
 	client := gotwtr.New(token)
 	tsr, err := client.SearchRecentTweets(context.Background(), "ハニプレ ゲリラライブ Lv3", &gotwtr.SearchTweetsOption{
 		MediaFields: []gotwtr.MediaField{gotwtr.MediaFieldURL},
 		MaxResults:  10,
+		// 2日前からのツイートに制限
+		StartTime: now.AddDate(0, 0, -2),
 	})
 	if err != nil {
 		log.Fatal("tweet client error:", err)
@@ -67,16 +77,7 @@ func main() {
 	idKeyword := "ゲリラ招待ID:"
 	dateKeyword := "期限:"
 
-	jst, err := time.LoadLocation("Asia/Tokyo")
-	if err != nil {
-		log.Fatal("time.LoadLocation error:", err)
-	}
-	now := time.Now().In(jst)
-	datetimeFormat := "2006/01/02 15:04"
-
 	for _, t := range tsr.Tweets {
-		fmt.Println(t) // ログ用
-
 		// Textから日時を抽出してフォーマット
 		dateIndex := strings.Index(t.Text, dateKeyword)
 		if dateIndex == -1 {
@@ -85,7 +86,7 @@ func main() {
 		}
 		datetimeStr := t.Text[dateIndex+len(dateKeyword) : dateIndex+len(dateKeyword)+11]
 		// yearは取得できないので、実行時と同じ年を設定
-		datetime, _ := time.ParseInLocation(datetimeFormat, fmt.Sprintf("%d/%s", now.Year(), datetimeStr), jst)
+		datetime, _ := time.ParseInLocation(DATETIME_FORMAT, fmt.Sprintf("%d/%s", now.Year(), datetimeStr), jst)
 
 		if now.Before(datetime) {
 			// TextからIDを抽出
@@ -108,9 +109,9 @@ func main() {
 
 			fmt.Println(t.Text) // ログ用
 
-			// メッセージを送信する
+			// LINEにメッセージを送信する
 			if _, err := bot.PushMessage(os.Getenv("GROUP_ID"), linebot.NewTextMessage(t.Text)).Do(); err != nil {
-				log.Fatal("linebot message error:", err)
+				log.Fatal("line bot message error:", err)
 			}
 
 			// IDをRedisに保存する
